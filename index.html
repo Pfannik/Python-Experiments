@@ -14,8 +14,96 @@
       const pyodide = await loadPyodide();
       const result = await pyodide.runPythonAsync(`
 with open("output.txt", "w") as f:
-    f.write("Hello from Python in WASM!")
+    f.write("Hello from Python in WASM! 1")
 "Done!"
+
+import pygame
+import random
+
+pygame.init()
+
+size = 300
+
+# Window size
+WIDTH, HEIGHT = 600, 600
+win = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Forest fires")
+
+# Grid settings
+PIXEL_SIZE = 2
+GRID_W = WIDTH // PIXEL_SIZE
+GRID_H = HEIGHT // PIXEL_SIZE
+
+# Create a grid of pixel positions and trees: 0 = no tree, 1 = tree, 2 = burning tree
+pixels = []
+trees = []
+burnticks = []
+for y in range(size):
+    rowp = []
+    rowt = []
+    rowb = []
+    for x in range(size):
+        rowp.append([x * PIXEL_SIZE, y * PIXEL_SIZE])
+        rowt.append(0)#((x + y) % 2)
+        rowb.append(0)
+    pixels.append(rowp)
+    trees.append(rowt)
+    burnticks.append(rowb)
+
+col = [(0, 0, 0), (0, 100, 0), (255, 128, 0)]
+
+clock = pygame.time.Clock()
+running = True
+tick = 0
+
+while running:
+    clock.tick(30)  # 30 FPS
+    tick += 1
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+    # Loop through grid
+    win.fill((0, 0, 0))
+    for y in range(size):
+        for x in range(size):
+            # Tree spawn
+            if trees[x][y] == 0:
+                ran = random.random()
+                if ran > .9995: trees[x][y] = 1
+            
+            # Fire spawn  
+            elif trees[x][y] == 1:
+                ran = random.random()
+                if ran > .999995: trees[x][y] = 2
+                #elif ran < .2 and x > 0 and trees[x-1][y] == 2: trees[x][y] = 2
+                #elif ran < .4 and x < size-1 and trees[x+1][y] == 2: trees[x][y] = 2
+                #elif ran < .6 and y > 0 and trees[x][y-1] == 2: trees[x][y] = 2
+                #elif ran < .8 and y > size-1 and trees[x][y+1] == 2: trees[x][y] = 2
+                
+            elif trees[x][y] == 2:
+                # Fire spread
+                ran = random.random()
+                if ran > .2:
+                    rax = random.randint(-2,2)
+                    ray = random.randint(-2,2)
+                    if 0 <= x + rax < size and 0 <= y + ray < size:
+                        if trees[x + rax][y + ray] == 1: trees[x + rax][y + ray] = 2
+                
+                # Burning
+                burnticks[x][y] += 1
+                if burnticks[x][y] > 10:
+                    trees[x][y] = 0
+                    burnticks[x][y] = 0
+
+            # Draw
+            pygame.draw.rect(win, col[trees[x][y]], (*pixels[x][y], PIXEL_SIZE, PIXEL_SIZE))
+
+    pygame.display.update()
+
+pygame.quit()
+
+
       `);
       document.getElementById("output").innerText = result;
     }
