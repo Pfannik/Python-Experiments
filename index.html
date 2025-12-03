@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Python in Browser</title>
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+</head>
+<body>
+  <h1>Python Running in the Browser!</h1>
+  <pre id="output"></pre>
+
+  <script type="text/javascript">
+    async function main() {
+      const pyodide = await loadPyodide();
+      const result = await pyodide.runPythonAsync(`
+with open("output.txt", "w") as f:
+    f.write("Hello from Python in WASM!")
+"Done!"
+      `);
+      document.getElementById("output").innerText = result;
+    }
+    main();
+  </script>
+</body>
+</html>
